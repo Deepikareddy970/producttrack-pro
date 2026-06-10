@@ -1,48 +1,46 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import axios from "axios";
 
 function Register() {
   const navigate = useNavigate();
 
-  const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleRegister = () => {
-    if (!username || !password || !role) {
+  const handleRegister = async () => {
+    if (!name || !email || !password || !role) {
       alert("Please fill all fields");
       return;
     }
 
-    const users =
-      JSON.parse(localStorage.getItem("users")) || [];
+    try {
+      const response = await axios.post(
+        "https://producttrack-backend-5wd3.onrender.com/api/auth/register",
+        {
+          name,
+          email,
+          password,
+          role,
+        }
+      );
 
-    const existingUser = users.find(
-      (user) => user.username === username
+      alert(response.data.message);
+
+      navigate("/login");
+    } catch (error) {
+
+      console.log(error);
+
+      alert(
+      error.response?.data?.message ||
+      error.message ||
+      "Registration Failed"
     );
-
-    if (existingUser) {
-      alert("User already exists");
-      return;
     }
-
-    const newUser = {
-      username,
-      password,
-      role,
-    };
-
-    users.push(newUser);
-
-    localStorage.setItem(
-      "users",
-      JSON.stringify(users)
-    );
-
-    alert("Account Created Successfully");
-
-    navigate("/login");
   };
 
   return (
@@ -50,7 +48,6 @@ function Register() {
 
       <div className="w-full max-w-6xl bg-white rounded-3xl overflow-hidden shadow-2xl grid md:grid-cols-2">
 
-        {/* Left Side */}
         <div className="hidden md:flex flex-col justify-center bg-gradient-to-br from-green-600 to-emerald-800 text-white p-12">
 
           <h1 className="text-5xl font-bold mb-4">
@@ -72,7 +69,6 @@ function Register() {
 
         </div>
 
-        {/* Right Side */}
         <div className="p-10 flex flex-col justify-center">
 
           <div className="text-center mb-8">
@@ -97,10 +93,20 @@ function Register() {
 
           <input
             type="text"
-            placeholder="Username"
-            value={username}
+            placeholder="Full Name"
+            value={name}
             onChange={(e) =>
-              setUsername(e.target.value)
+              setName(e.target.value)
+            }
+            className="w-full border border-gray-300 p-3 rounded-lg mb-4"
+          />
+
+          <input
+            type="email"
+            placeholder="Email Address"
+            value={email}
+            onChange={(e) =>
+              setEmail(e.target.value)
             }
             className="w-full border border-gray-300 p-3 rounded-lg mb-4"
           />
@@ -166,7 +172,6 @@ function Register() {
             <option value="sales">
               Sales
             </option>
-
           </select>
 
           <button

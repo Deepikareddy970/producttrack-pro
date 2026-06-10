@@ -1,154 +1,173 @@
 import { useState, useEffect } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 function Employees() {
+  const navigate = useNavigate();
+
+  const userRole = localStorage.getItem("role");
+  const isManager = userRole === "manager";
+
   const [employees, setEmployees] = useState([]);
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [department, setDepartment] = useState("");
-  const [editId, setEditId] = useState(null);
 
   useEffect(() => {
-    const savedEmployees =
-      JSON.parse(localStorage.getItem("employees")) || [];
-
-    setEmployees(savedEmployees);
+    fetchEmployees();
   }, []);
 
-  const addEmployee = () => {
+  const fetchEmployees = async () => {
+    try {
+      const res = await axios.get(
+        "https://producttrack-backend-5wd3.onrender.com/api/employees"
+      );
+
+      setEmployees(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const addEmployee = async () => {
     if (!name || !role || !department) {
       alert("Please fill all fields");
       return;
     }
 
-    if (editId) {
-      const updatedEmployees = employees.map((employee) =>
-        employee.id === editId
-          ? {
-              ...employee,
-              name,
-              role,
-              department,
-            }
-          : employee
+    try {
+      await axios.post(
+        "https://producttrack-backend-5wd3.onrender.com/api/employees",
+        {
+          name,
+          role,
+          department,
+        }
       );
 
-      setEmployees(updatedEmployees);
+      alert("Employee Added Successfully");
 
-      localStorage.setItem(
-        "employees",
-        JSON.stringify(updatedEmployees)
-      );
+      setName("");
+      setRole("");
+      setDepartment("");
 
-      setEditId(null);
-    } else {
-      const newEmployee = {
-        id: Date.now(),
-        name,
-        role,
-        department,
-      };
-
-      const updatedEmployees = [
-        ...employees,
-        newEmployee,
-      ];
-
-      setEmployees(updatedEmployees);
-
-      localStorage.setItem(
-        "employees",
-        JSON.stringify(updatedEmployees)
-      );
+      fetchEmployees();
+    } catch (error) {
+      console.log(error);
     }
-
-    setName("");
-    setRole("");
-    setDepartment("");
   };
 
-  const editEmployee = (employee) => {
-    setEditId(employee.id);
-    setName(employee.name);
-    setRole(employee.role);
-    setDepartment(employee.department);
-  };
-
-  const deleteEmployee = (id) => {
-    const updatedEmployees = employees.filter(
-      (employee) => employee.id !== id
+  const deleteEmployee = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this employee?"
     );
 
-    setEmployees(updatedEmployees);
+    if (!confirmDelete) return;
 
-    localStorage.setItem(
-      "employees",
-      JSON.stringify(updatedEmployees)
-    );
+    try {
+      await axios.delete(
+        `https://producttrack-backend-5wd3.onrender.com/api/employees/${id}`
+      );
+
+      alert("Employee Deleted Successfully");
+
+      fetchEmployees();
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
     <div className="p-10 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6">
-        Employee Management
-      </h1>
 
-      <div className="bg-white p-6 rounded-lg shadow mb-6">
-        <h2 className="text-xl font-bold mb-4">
-          {editId ? "Edit Employee" : "Add Employee"}
-        </h2>
+      <div className="flex justify-between items-center mb-6">
 
-        <input
-          type="text"
-          placeholder="Employee Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="border p-2 w-full mb-3 rounded"
-        />
-
-        <input
-          type="text"
-          placeholder="Role"
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          className="border p-2 w-full mb-3 rounded"
-        />
-
-        <input
-          type="text"
-          placeholder="Department"
-          value={department}
-          onChange={(e) => setDepartment(e.target.value)}
-          className="border p-2 w-full mb-3 rounded"
-        />
+        <h1 className="text-3xl font-bold">
+          Employee Management
+        </h1>
 
         <button
-          onClick={addEmployee}
-          className="bg-blue-700 text-white px-4 py-2 rounded"
+          onClick={() => navigate(-1)}
+          className="bg-gray-700 hover:bg-gray-800 text-white px-5 py-2 rounded-lg"
         >
-          {editId ? "Update Employee" : "Add Employee"}
+          Back
         </button>
+
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow">
+      {!isManager && (
+        <div className="bg-white p-6 rounded-xl shadow-lg mb-6">
+
+          <h2 className="text-xl font-bold mb-4">
+            Add Employee
+          </h2>
+
+          <input
+            type="text"
+            placeholder="Employee Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="border p-3 w-full mb-3 rounded-lg"
+          />
+
+          <input
+            type="text"
+            placeholder="Role"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="border p-3 w-full mb-3 rounded-lg"
+          />
+
+          <input
+            type="text"
+            placeholder="Department"
+            value={department}
+            onChange={(e) =>
+              setDepartment(e.target.value)
+            }
+            className="border p-3 w-full mb-3 rounded-lg"
+          />
+
+          <button
+            onClick={addEmployee}
+            className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-lg"
+          >
+            Add Employee
+          </button>
+
+        </div>
+      )}
+
+      <div className="bg-white p-6 rounded-xl shadow-lg">
+
         <h2 className="text-xl font-bold mb-4">
           Employee List
         </h2>
 
         <table className="w-full border">
+
           <thead>
+
             <tr className="bg-blue-700 text-white">
+
               <th className="p-3">Name</th>
               <th className="p-3">Role</th>
               <th className="p-3">Department</th>
-              <th className="p-3">Actions</th>
+
+              {!isManager && (
+                <th className="p-3">Action</th>
+              )}
+
             </tr>
+
           </thead>
 
           <tbody>
+
             {employees.length === 0 ? (
               <tr>
                 <td
-                  colSpan="4"
+                  colSpan={isManager ? "3" : "4"}
                   className="text-center p-4"
                 >
                   No Employees Found
@@ -157,9 +176,10 @@ function Employees() {
             ) : (
               employees.map((employee) => (
                 <tr
-                  key={employee.id}
+                  key={employee._id}
                   className="text-center border-b"
                 >
+
                   <td className="p-3">
                     {employee.name}
                   </td>
@@ -172,35 +192,31 @@ function Employees() {
                     {employee.department}
                   </td>
 
-                  <td className="p-3">
-                    <div className="flex justify-center gap-2">
+                  {!isManager && (
+                    <td className="p-3">
 
                       <button
                         onClick={() =>
-                          editEmployee(employee)
+                          deleteEmployee(employee._id)
                         }
-                        className="bg-yellow-500 text-white px-3 py-1 rounded"
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          deleteEmployee(employee.id)
-                        }
-                        className="bg-red-500 text-white px-3 py-1 rounded"
+                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
                       >
                         Delete
                       </button>
 
-                    </div>
-                  </td>
+                    </td>
+                  )}
+
                 </tr>
               ))
             )}
+
           </tbody>
+
         </table>
+
       </div>
+
     </div>
   );
 }

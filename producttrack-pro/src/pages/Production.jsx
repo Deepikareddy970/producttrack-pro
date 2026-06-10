@@ -1,177 +1,196 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-function Inventory() {
-  const [items, setItems] = useState([]);
+function Production() {
+  const navigate = useNavigate();
 
-  const [itemName, setItemName] = useState("");
-  const [category, setCategory] = useState("");
-  const [supplier, setSupplier] = useState("");
+  const userRole = localStorage.getItem("role");
+
+  const [production, setProduction] = useState([]);
+
+  const [productName, setProductName] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [price, setPrice] = useState("");
+  const [status, setStatus] = useState("In Progress");
 
   useEffect(() => {
-    const savedItems =
-      JSON.parse(localStorage.getItem("inventory")) || [];
-
-    setItems(savedItems);
+    fetchProduction();
   }, []);
 
-  const addItem = () => {
-    if (
-      !itemName ||
-      !category ||
-      !supplier ||
-      !quantity ||
-      !price
-    ) {
+  const fetchProduction = async () => {
+    try {
+      const res = await axios.get(
+        "https://producttrack-backend-5wd3.onrender.com/api/production"
+      );
+
+      setProduction(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const addProduction = async () => {
+    if (!productName || !quantity) {
       alert("Please fill all fields");
       return;
     }
 
-    const newItem = {
-      id: "INV" + Date.now(),
-      itemName,
-      category,
-      supplier,
-      quantity: Number(quantity),
-      price: Number(price),
-      status:
-        Number(quantity) < 20
-          ? "Low Stock"
-          : "Available",
-    };
+    try {
+      await axios.post(
+        "https://producttrack-backend-5wd3.onrender.com/api/production",
+        {
+          productName,
+          quantity,
+          status,
+          date: new Date().toLocaleDateString(),
+        }
+      );
 
-    const updatedItems = [
-      ...items,
-      newItem,
-    ];
+      setProductName("");
+      setQuantity("");
+      setStatus("In Progress");
 
-    setItems(updatedItems);
+      fetchProduction();
 
-    localStorage.setItem(
-      "inventory",
-      JSON.stringify(updatedItems)
-    );
-
-    setItemName("");
-    setCategory("");
-    setSupplier("");
-    setQuantity("");
-    setPrice("");
+      alert("Production Record Added Successfully");
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const deleteItem = (id) => {
-    const updatedItems = items.filter(
-      (item) => item.id !== id
+  const deleteRecord = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this record?"
     );
 
-    setItems(updatedItems);
+    if (!confirmDelete) return;
 
-    localStorage.setItem(
-      "inventory",
-      JSON.stringify(updatedItems)
-    );
+    try {
+      await axios.delete(
+        `https://producttrack-backend-5wd3.onrender.com/api/production/${id}`
+      );
+
+      fetchProduction();
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const totalStock = items.reduce(
-    (sum, item) => sum + item.quantity,
-    0
-  );
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("name");
 
-  const totalValue = items.reduce(
+    navigate("/login");
+  };
+
+  const completedCount = production.filter(
+    (item) => item.status === "Completed"
+  ).length;
+
+  const totalUnits = production.reduce(
     (sum, item) =>
-      sum + item.quantity * item.price,
+      sum + Number(item.quantity || 0),
     0
   );
 
   return (
     <div className="p-10 bg-slate-100 min-h-screen">
 
-      <h1 className="text-4xl font-bold mb-8">
-        Inventory Management
-      </h1>
+      <div className="flex justify-between items-center mb-8">
 
-      {/* Add Item Form */}
-      <div className="bg-white p-6 rounded-xl shadow-lg mb-8">
+        <div>
+          <h1 className="text-4xl font-bold text-slate-800">
+            Production Management
+          </h1>
 
-        <h2 className="text-2xl font-bold mb-5">
-          Add Inventory Item
-        </h2>
+          <p className="text-gray-600 mt-2">
+            Track Production Records & Output
+          </p>
+        </div>
 
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="flex gap-3">
 
-          <input
-            type="text"
-            placeholder="Item Name"
-            value={itemName}
-            onChange={(e) =>
-              setItemName(e.target.value)
-            }
-            className="border p-3 rounded"
-          />
+          <button
+            onClick={() => navigate(-1)}
+            className="bg-gray-600 hover:bg-gray-700 text-white px-5 py-2 rounded-lg"
+          >
+            Back
+          </button>
 
-          <input
-            type="text"
-            placeholder="Category"
-            value={category}
-            onChange={(e) =>
-              setCategory(e.target.value)
-            }
-            className="border p-3 rounded"
-          />
-
-          <input
-            type="text"
-            placeholder="Supplier Name"
-            value={supplier}
-            onChange={(e) =>
-              setSupplier(e.target.value)
-            }
-            className="border p-3 rounded"
-          />
-
-          <input
-            type="number"
-            placeholder="Quantity"
-            value={quantity}
-            onChange={(e) =>
-              setQuantity(e.target.value)
-            }
-            className="border p-3 rounded"
-          />
-
-          <input
-            type="number"
-            placeholder="Unit Price"
-            value={price}
-            onChange={(e) =>
-              setPrice(e.target.value)
-            }
-            className="border p-3 rounded"
-          />
+          <button
+            onClick={logout}
+            className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg"
+          >
+            Logout
+          </button>
 
         </div>
 
-        <button
-          onClick={addItem}
-          className="mt-5 bg-yellow-500 text-white px-6 py-3 rounded-lg"
-        >
-          Add Item
-        </button>
-
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid md:grid-cols-2 gap-6 mb-8">
+      {userRole !== "manager" && (
+        <div className="bg-white p-6 rounded-xl shadow-lg mb-8">
 
-        <div className="bg-blue-600 text-white p-6 rounded-xl shadow-lg">
+          <h2 className="text-2xl font-bold mb-5">
+            Add Production Record
+          </h2>
+
+          <div className="grid md:grid-cols-3 gap-4">
+
+            <input
+              type="text"
+              placeholder="Product Name"
+              value={productName}
+              onChange={(e) =>
+                setProductName(e.target.value)
+              }
+              className="border p-3 rounded-lg"
+            />
+
+            <input
+              type="number"
+              placeholder="Quantity"
+              value={quantity}
+              onChange={(e) =>
+                setQuantity(e.target.value)
+              }
+              className="border p-3 rounded-lg"
+            />
+
+            <select
+              value={status}
+              onChange={(e) =>
+                setStatus(e.target.value)
+              }
+              className="border p-3 rounded-lg"
+            >
+              <option>In Progress</option>
+              <option>Completed</option>
+            </select>
+
+          </div>
+
+          <button
+            onClick={addProduction}
+            className="mt-5 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg shadow-lg"
+          >
+            Add Record
+          </button>
+
+        </div>
+      )}
+
+      <div className="grid md:grid-cols-3 gap-6 mb-8">
+
+        <div className="bg-purple-600 text-white p-6 rounded-xl shadow-lg">
 
           <h2 className="text-xl font-semibold">
-            Total Stock
+            Total Records
           </h2>
 
           <p className="text-4xl font-bold mt-3">
-            {totalStock}
+            {production.length}
           </p>
 
         </div>
@@ -179,89 +198,122 @@ function Inventory() {
         <div className="bg-green-600 text-white p-6 rounded-xl shadow-lg">
 
           <h2 className="text-xl font-semibold">
-            Inventory Value
+            Completed Records
           </h2>
 
           <p className="text-4xl font-bold mt-3">
-            ₹{totalValue}
+            {completedCount}
+          </p>
+
+        </div>
+
+        <div className="bg-blue-600 text-white p-6 rounded-xl shadow-lg">
+
+          <h2 className="text-xl font-semibold">
+            Total Units Produced
+          </h2>
+
+          <p className="text-4xl font-bold mt-3">
+            {totalUnits}
           </p>
 
         </div>
 
       </div>
 
-      {/* Inventory Table */}
       <div className="bg-white p-6 rounded-xl shadow-lg">
 
         <h2 className="text-2xl font-bold mb-5">
-          Inventory Records
+          Production Records
         </h2>
 
-        <div className="overflow-x-auto">
+        <table className="w-full border">
 
-          <table className="w-full border">
+          <thead>
 
-            <thead>
-              <tr className="bg-yellow-500 text-white">
+            <tr className="bg-purple-600 text-white">
 
-                <th className="p-3">ID</th>
-                <th className="p-3">Item</th>
-                <th className="p-3">Category</th>
-                <th className="p-3">Supplier</th>
-                <th className="p-3">Quantity</th>
-                <th className="p-3">Price</th>
-                <th className="p-3">Status</th>
+              <th className="p-3">Product</th>
+              <th className="p-3">Quantity</th>
+              <th className="p-3">Status</th>
+              <th className="p-3">Date</th>
+
+              {userRole !== "manager" && (
                 <th className="p-3">Action</th>
+              )}
 
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            {production.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={
+                    userRole === "manager" ? 4 : 5
+                  }
+                  className="text-center p-5"
+                >
+                  No Production Records Found
+                </td>
               </tr>
-            </thead>
+            ) : (
+              production.map((item) => (
+                <tr
+                  key={item._id}
+                  className="text-center border-b hover:bg-slate-100"
+                >
 
-            <tbody>
-
-              {items.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan="8"
-                    className="text-center p-5"
-                  >
-                    No Inventory Found
+                  <td className="p-3">
+                    {item.productName}
                   </td>
-                </tr>
-              ) : (
-                items.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="text-center border-b"
-                  >
 
-                    <td>{item.id}</td>
-                    <td>{item.itemName}</td>
-                    <td>{item.category}</td>
-                    <td>{item.supplier}</td>
-                    <td>{item.quantity}</td>
-                    <td>₹{item.price}</td>
-                    <td>{item.status}</td>
+                  <td className="p-3">
+                    {item.quantity}
+                  </td>
 
-                    <td>
+                  <td className="p-3">
+
+                    <span
+                      className={`px-3 py-1 rounded-full text-white ${
+                        item.status === "Completed"
+                          ? "bg-green-600"
+                          : "bg-yellow-500"
+                      }`}
+                    >
+                      {item.status}
+                    </span>
+
+                  </td>
+
+                  <td className="p-3">
+                    {item.date}
+                  </td>
+
+                  {userRole !== "manager" && (
+                    <td className="p-3">
+
                       <button
                         onClick={() =>
-                          deleteItem(item.id)
+                          deleteRecord(item._id)
                         }
-                        className="bg-red-500 text-white px-3 py-1 rounded"
+                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
                       >
                         Delete
                       </button>
+
                     </td>
+                  )}
 
-                  </tr>
-                ))
-              )}
+                </tr>
+              ))
+            )}
 
-            </tbody>
+          </tbody>
 
-          </table>
-
-        </div>
+        </table>
 
       </div>
 
@@ -269,4 +321,4 @@ function Inventory() {
   );
 }
 
-export default Inventory;
+export default Production;

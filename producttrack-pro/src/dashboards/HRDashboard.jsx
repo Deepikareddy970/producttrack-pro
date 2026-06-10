@@ -1,18 +1,47 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function HRDashboard() {
+  const navigate = useNavigate();
+
+  const user =
+    JSON.parse(localStorage.getItem("currentUser")) || {};
+
   const employees =
     JSON.parse(localStorage.getItem("employees")) || [];
 
   const attendance =
     JSON.parse(localStorage.getItem("attendance")) || [];
 
+  const logout = () => {
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
+
   return (
     <div className="p-10 bg-slate-100 min-h-screen">
 
-      <h1 className="text-4xl font-bold text-slate-800 mb-8">
-        HR Dashboard
-      </h1>
+      {/* Header */}
+      <div className="flex justify-between items-center mb-8">
+
+        <div>
+          <h1 className="text-4xl font-bold text-slate-800">
+            HR Dashboard
+          </h1>
+
+          <p className="text-gray-600 mt-2">
+            Welcome, {user.username || "HR"}
+          </p>
+        </div>
+
+        <button
+          onClick={logout}
+          className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg"
+        >
+          Logout
+        </button>
+
+      </div>
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -88,11 +117,53 @@ function HRDashboard() {
           </p>
 
           <p>
-            ✅ HR Department manages
-            employee records and attendance.
+            ✅ HR Department manages employee records and attendance.
           </p>
 
         </div>
+
+      </div>
+
+      {/* Recent Employees */}
+      <div className="mt-10 bg-white p-8 rounded-xl shadow-lg">
+
+        <h2 className="text-2xl font-bold mb-6">
+          Recent Employees
+        </h2>
+
+        {employees.length === 0 ? (
+          <p>No Employees Found</p>
+        ) : (
+          <table className="w-full border">
+
+            <thead>
+              <tr className="bg-blue-600 text-white">
+                <th className="p-3">Name</th>
+                <th className="p-3">Role</th>
+                <th className="p-3">Department</th>
+              </tr>
+            </thead>
+
+            <tbody>
+
+              {employees
+                .slice(-5)
+                .reverse()
+                .map((employee) => (
+                  <tr
+                    key={employee.id}
+                    className="text-center border-b"
+                  >
+                    <td>{employee.name}</td>
+                    <td>{employee.role}</td>
+                    <td>{employee.department}</td>
+                  </tr>
+                ))}
+
+            </tbody>
+
+          </table>
+        )}
 
       </div>
 

@@ -1,5 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+// Components
+import ProtectedRoute from "./components/ProtectedRoute";
+
 // Pages
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -29,30 +32,117 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Dashboards */}
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/manager" element={<ManagerDashboard />} />
-        <Route path="/hr" element={<HRDashboard />} />
+        {/* Protected Dashboards */}
+
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRole="admin">
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/manager"
+          element={
+            <ProtectedRoute allowedRole="manager">
+              <ManagerDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/hr"
+          element={
+            <ProtectedRoute allowedRole="hr">
+              <HRDashboard />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/production-dashboard"
-          element={<ProductionDashboard />}
+          element={
+            <ProtectedRoute allowedRole="production">
+              <ProductionDashboard />
+            </ProtectedRoute>
+          }
         />
+
         <Route
           path="/inventory-dashboard"
-          element={<InventoryDashboard />}
+          element={
+            <ProtectedRoute allowedRole="inventory">
+              <InventoryDashboard />
+            </ProtectedRoute>
+          }
         />
+
         <Route
           path="/sales-dashboard"
-          element={<SalesDashboard />}
+          element={
+            <ProtectedRoute allowedRole="sales">
+              <SalesDashboard />
+            </ProtectedRoute>
+          }
         />
 
         {/* Functional Pages */}
-        <Route path="/employees" element={<Employees />} />
-        <Route path="/attendance" element={<Attendance />} />
-        <Route path="/inventory-page" element={<Inventory />} />
-        <Route path="/production-page" element={<Production />} />
-        <Route path="/sales-page" element={<Sales />} />
-        <Route path="/reports" element={<Reports />} />
+
+        <Route
+          path="/employees"
+          element={
+            <ProtectedRoute>
+              <Employees />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/attendance"
+          element={
+            <ProtectedRoute>
+              <Attendance />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/inventory-page"
+          element={
+            <ProtectedRoute>
+              <Inventory />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/production-page"
+          element={
+            <ProtectedRoute>
+              <Production />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/sales-page"
+          element={
+            <ProtectedRoute>
+              <Sales />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reports"
+          element={
+            <ProtectedRoute>
+              <Reports />
+            </ProtectedRoute>
+          }
+        />
 
       </Routes>
     </BrowserRouter>

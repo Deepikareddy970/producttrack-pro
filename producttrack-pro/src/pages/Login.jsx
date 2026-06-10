@@ -1,50 +1,74 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import axios from "axios";
 
 function Login() {
   const navigate = useNavigate();
 
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = () => {
-    const users =
-      JSON.parse(localStorage.getItem("users")) || [];
-
-    const user = users.find(
-      (u) =>
-        u.username === username &&
-        u.password === password
-    );
-
-    if (!user) {
-      alert("Invalid Username or Password");
+  const handleLogin = async () => {
+    if (!email || !password) {
+      alert("Please fill all fields");
       return;
     }
 
-    localStorage.setItem(
-      "currentUser",
-      JSON.stringify(user)
-    );
+    try {
+      const response = await axios.post(
+        "https://producttrack-backend-5wd3.onrender.com/api/auth/login",
+        {
+          email,
+          password,
+        }
+      );
 
-    if (user.role === "admin")
-      navigate("/admin");
+      const data = response.data;
 
-    if (user.role === "manager")
-      navigate("/manager");
+      localStorage.setItem("token", data.token);
 
-    if (user.role === "hr")
-      navigate("/hr");
+      localStorage.setItem("role", data.role);
 
-    if (user.role === "production")
-      navigate("/production-dashboard");
+      localStorage.setItem("name", data.name);
 
-    if (user.role === "inventory")
-      navigate("/inventory-dashboard");
+      localStorage.setItem(
+        "currentUser",
+        JSON.stringify({
+          username: data.name,
+          role: data.role,
+        })
+      );
 
-    if (user.role === "sales")
-      navigate("/sales-dashboard");
+      if (data.role === "admin") {
+        navigate("/admin");
+      }
+
+      if (data.role === "manager") {
+        navigate("/manager");
+      }
+
+      if (data.role === "hr") {
+        navigate("/hr");
+      }
+
+      if (data.role === "production") {
+        navigate("/production-dashboard");
+      }
+
+      if (data.role === "inventory") {
+        navigate("/inventory-dashboard");
+      }
+
+      if (data.role === "sales") {
+        navigate("/sales-dashboard");
+      }
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+          "Invalid Email or Password"
+      );
+    }
   };
 
   return (
@@ -52,7 +76,6 @@ function Login() {
 
       <div className="w-full max-w-6xl bg-white rounded-3xl overflow-hidden shadow-2xl grid md:grid-cols-2">
 
-        {/* Left Side */}
         <div className="hidden md:flex flex-col justify-center bg-gradient-to-br from-blue-700 to-indigo-900 text-white p-12">
 
           <h1 className="text-5xl font-bold mb-4">
@@ -74,7 +97,6 @@ function Login() {
 
         </div>
 
-        {/* Right Side */}
         <div className="p-10 flex flex-col justify-center">
 
           <div className="text-center mb-8">
@@ -98,11 +120,11 @@ function Login() {
           </div>
 
           <input
-            type="text"
-            placeholder="Username"
-            value={username}
+            type="email"
+            placeholder="Email Address"
+            value={email}
             onChange={(e) =>
-              setUsername(e.target.value)
+              setEmail(e.target.value)
             }
             className="w-full border border-gray-300 p-3 rounded-lg mb-4"
           />
@@ -123,9 +145,7 @@ function Login() {
 
           <p
             onClick={() =>
-              setShowPassword(
-                !showPassword
-              )
+              setShowPassword(!showPassword)
             }
             className="text-blue-700 cursor-pointer mt-2 mb-4"
           >
@@ -133,22 +153,6 @@ function Login() {
               ? "Hide Password"
               : "Show Password"}
           </p>
-
-          <div className="flex justify-between items-center mb-6">
-
-            <label className="flex items-center gap-2">
-
-              <input type="checkbox" />
-
-              Remember Me
-
-            </label>
-
-            <span className="text-blue-700 cursor-pointer">
-              Forgot Password?
-            </span>
-
-          </div>
 
           <button
             onClick={handleLogin}

@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import axios from "axios";
 import {
   BarChart,
   Bar,
@@ -16,57 +18,61 @@ function AdminDashboard() {
   const user =
     JSON.parse(localStorage.getItem("currentUser")) || {};
 
-  const employees =
-    JSON.parse(localStorage.getItem("employees")) || [];
+  const [dashboardData, setDashboardData] = useState({
+    employees: 0,
+    attendance: 0,
+    inventory: 0,
+    production: 0,
+    sales: 0,
+    revenue: 0,
+  });
 
-  const attendance =
-    JSON.parse(localStorage.getItem("attendance")) || [];
+  useEffect(() => {
+    fetchDashboard();
+  }, []);
 
-  const inventory =
-    JSON.parse(localStorage.getItem("inventory")) || [];
+  const fetchDashboard = async () => {
+    try {
+      const res = await axios.get(
+        "https://producttrack-backend-5wd3.onrender.com/api/reports/dashboard"
+      );
 
-  const production =
-    JSON.parse(localStorage.getItem("production")) || [];
-
-  const sales =
-    JSON.parse(localStorage.getItem("sales")) || [];
-
-  const revenue = sales.reduce(
-    (sum, order) => sum + Number(order.amount || 0),
-    0
-  );
-
-  const chartData = [
-    {
-      name: "Employees",
-      value: employees.length,
-    },
-    {
-      name: "Attendance",
-      value: attendance.length,
-    },
-    {
-      name: "Inventory",
-      value: inventory.length,
-    },
-    {
-      name: "Production",
-      value: production.length,
-    },
-    {
-      name: "Sales",
-      value: sales.length,
-    },
-  ];
+      setDashboardData(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const logout = () => {
     localStorage.removeItem("currentUser");
     navigate("/login");
   };
 
+  const chartData = [
+    {
+      name: "Employees",
+      value: dashboardData.employees,
+    },
+    {
+      name: "Attendance",
+      value: dashboardData.attendance,
+    },
+    {
+      name: "Inventory",
+      value: dashboardData.inventory,
+    },
+    {
+      name: "Production",
+      value: dashboardData.production,
+    },
+    {
+      name: "Sales",
+      value: dashboardData.sales,
+    },
+  ];
+
   return (
     <div className="flex">
-
       <Sidebar />
 
       <div className="flex-1 p-10 bg-slate-100 min-h-screen">
@@ -86,63 +92,48 @@ function AdminDashboard() {
 
           <button
             onClick={logout}
-            className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg"
+            className="bg-red-600 text-white px-5 py-2 rounded-lg"
           >
             Logout
           </button>
 
         </div>
 
-        {/* Statistics Cards */}
+        {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
 
-          <div className="bg-blue-600 text-white p-6 rounded-xl shadow-lg">
-            <h2 className="text-lg font-semibold">
-              Employees
-            </h2>
-
+          <div className="bg-blue-600 text-white p-6 rounded-xl">
+            <h2>Employees</h2>
             <p className="text-4xl font-bold mt-3">
-              {employees.length}
+              {dashboardData.employees}
             </p>
           </div>
 
-          <div className="bg-green-600 text-white p-6 rounded-xl shadow-lg">
-            <h2 className="text-lg font-semibold">
-              Attendance
-            </h2>
-
+          <div className="bg-green-600 text-white p-6 rounded-xl">
+            <h2>Attendance</h2>
             <p className="text-4xl font-bold mt-3">
-              {attendance.length}
+              {dashboardData.attendance}
             </p>
           </div>
 
-          <div className="bg-yellow-500 text-white p-6 rounded-xl shadow-lg">
-            <h2 className="text-lg font-semibold">
-              Inventory
-            </h2>
-
+          <div className="bg-yellow-500 text-white p-6 rounded-xl">
+            <h2>Inventory</h2>
             <p className="text-4xl font-bold mt-3">
-              {inventory.length}
+              {dashboardData.inventory}
             </p>
           </div>
 
-          <div className="bg-purple-600 text-white p-6 rounded-xl shadow-lg">
-            <h2 className="text-lg font-semibold">
-              Production
-            </h2>
-
+          <div className="bg-purple-600 text-white p-6 rounded-xl">
+            <h2>Production</h2>
             <p className="text-4xl font-bold mt-3">
-              {production.length}
+              {dashboardData.production}
             </p>
           </div>
 
-          <div className="bg-red-600 text-white p-6 rounded-xl shadow-lg">
-            <h2 className="text-lg font-semibold">
-              Revenue
-            </h2>
-
+          <div className="bg-red-600 text-white p-6 rounded-xl">
+            <h2>Revenue</h2>
             <p className="text-4xl font-bold mt-3">
-              ₹{revenue}
+              ₹{dashboardData.revenue}
             </p>
           </div>
 
@@ -151,51 +142,45 @@ function AdminDashboard() {
         {/* Company Overview */}
         <div className="mt-10 bg-white p-8 rounded-xl shadow-lg">
 
-          <h2 className="text-2xl font-bold text-slate-800 mb-6">
+          <h2 className="text-2xl font-bold mb-6">
             Company Overview
           </h2>
 
           <div className="space-y-4 text-lg">
 
             <p>
-              👥 Total Employees :
-              {" "}
-              {employees.length}
+              👥 Employees : {dashboardData.employees}
             </p>
 
             <p>
-              📅 Attendance Records :
-              {" "}
-              {attendance.length}
+              📅 Attendance : {dashboardData.attendance}
             </p>
 
             <p>
-              📦 Inventory Items :
-              {" "}
-              {inventory.length}
+              📦 Inventory : {dashboardData.inventory}
             </p>
 
             <p>
-              🏭 Production Records :
-              {" "}
-              {production.length}
+              🏭 Production : {dashboardData.production}
             </p>
 
             <p>
-              💰 Total Revenue :
-              {" "}
-              ₹{revenue}
+              🛒 Sales : {dashboardData.sales}
+            </p>
+
+            <p>
+              💰 Revenue : ₹{dashboardData.revenue}
             </p>
 
           </div>
 
         </div>
 
-        {/* Analytics Chart */}
+        {/* Chart */}
         <div className="mt-10 bg-white p-8 rounded-xl shadow-lg">
 
-          <h2 className="text-2xl font-bold text-slate-800 mb-6">
-            Company Analytics
+          <h2 className="text-2xl font-bold mb-6">
+            Company Statistics
           </h2>
 
           <ResponsiveContainer
@@ -203,7 +188,6 @@ function AdminDashboard() {
             height={350}
           >
             <BarChart data={chartData}>
-
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
@@ -211,100 +195,13 @@ function AdminDashboard() {
               <Bar
                 dataKey="value"
                 fill="#2563eb"
-                radius={[10, 10, 0, 0]}
               />
-
             </BarChart>
           </ResponsiveContainer>
 
         </div>
 
-        {/* Recent Employees */}
-        <div className="mt-10 bg-white p-8 rounded-xl shadow-lg">
-
-          <h2 className="text-2xl font-bold mb-6">
-            Recent Employees
-          </h2>
-
-          {employees.length === 0 ? (
-            <p>No Employees Found</p>
-          ) : (
-            <table className="w-full border">
-
-              <thead>
-                <tr className="bg-blue-600 text-white">
-                  <th className="p-3">Name</th>
-                  <th className="p-3">Role</th>
-                  <th className="p-3">Department</th>
-                </tr>
-              </thead>
-
-              <tbody>
-
-                {employees
-                  .slice(-5)
-                  .reverse()
-                  .map((employee) => (
-                    <tr
-                      key={employee.id}
-                      className="border-b text-center"
-                    >
-                      <td>{employee.name}</td>
-                      <td>{employee.role}</td>
-                      <td>{employee.department}</td>
-                    </tr>
-                  ))}
-
-              </tbody>
-
-            </table>
-          )}
-
-        </div>
-
-        {/* Recent Orders */}
-        <div className="mt-10 bg-white p-8 rounded-xl shadow-lg">
-
-          <h2 className="text-2xl font-bold mb-6">
-            Recent Orders
-          </h2>
-
-          {sales.length === 0 ? (
-            <p>No Orders Found</p>
-          ) : (
-            <table className="w-full border">
-
-              <thead>
-                <tr className="bg-red-600 text-white">
-                  <th className="p-3">Customer</th>
-                  <th className="p-3">Amount</th>
-                </tr>
-              </thead>
-
-              <tbody>
-
-                {sales
-                  .slice(-5)
-                  .reverse()
-                  .map((order) => (
-                    <tr
-                      key={order.id}
-                      className="border-b text-center"
-                    >
-                      <td>{order.customer}</td>
-                      <td>₹{order.amount}</td>
-                    </tr>
-                  ))}
-
-              </tbody>
-
-            </table>
-          )}
-
-        </div>
-
       </div>
-
     </div>
   );
 }

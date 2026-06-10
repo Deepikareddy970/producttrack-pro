@@ -1,21 +1,65 @@
-
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function SalesDashboard() {
-  const sales =
-    JSON.parse(localStorage.getItem("sales")) || [];
+  const navigate = useNavigate();
 
-  const revenue = sales.reduce(
-    (sum, order) => sum + Number(order.amount || 0),
-    0
-  );
+  const [report, setReport] = useState({
+    sales: 0,
+    revenue: 0,
+  });
+
+  const user =
+    JSON.parse(localStorage.getItem("currentUser")) || {};
+
+  useEffect(() => {
+    fetchDashboard();
+  }, []);
+
+  const fetchDashboard = async () => {
+    try {
+      const res = await axios.get(
+        "https://producttrack-backend-5wd3.onrender.com/api/reports/dashboard"
+      );
+
+      setReport({
+        sales: res.data.sales,
+        revenue: res.data.revenue,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem("currentUser");
+    navigate("/login");
+  };
 
   return (
     <div className="p-10 bg-slate-100 min-h-screen">
 
-      <h1 className="text-4xl font-bold text-slate-800 mb-8">
-        Sales Dashboard
-      </h1>
+      <div className="flex justify-between items-center mb-8">
+
+        <div>
+          <h1 className="text-4xl font-bold text-slate-800">
+            Sales Dashboard
+          </h1>
+
+          <p className="text-gray-600 mt-2">
+            Welcome, {user.username || "Sales User"}
+          </p>
+        </div>
+
+        <button
+          onClick={logout}
+          className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg"
+        >
+          Logout
+        </button>
+
+      </div>
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -27,7 +71,7 @@ function SalesDashboard() {
           </h2>
 
           <p className="text-4xl font-bold mt-3">
-            {sales.length}
+            {report.sales}
           </p>
 
         </div>
@@ -39,7 +83,7 @@ function SalesDashboard() {
           </h2>
 
           <p className="text-4xl font-bold mt-3">
-            ₹{revenue}
+            ₹{report.revenue}
           </p>
 
         </div>
@@ -72,11 +116,15 @@ function SalesDashboard() {
         <div className="space-y-4 text-lg">
 
           <p>
-            🧾 Total Orders : {sales.length}
+            🧾 Total Orders :
+            {" "}
+            {report.sales}
           </p>
 
           <p>
-            💰 Total Revenue : ₹{revenue}
+            💰 Total Revenue :
+            {" "}
+            ₹{report.revenue}
           </p>
 
           <p>
@@ -92,44 +140,28 @@ function SalesDashboard() {
 
       </div>
 
-      {/* Recent Orders */}
+      {/* Sales Status */}
       <div className="mt-10 bg-white p-8 rounded-xl shadow-lg">
 
         <h2 className="text-2xl font-bold mb-6">
-          Recent Orders
+          Sales Status
         </h2>
 
-        {sales.length === 0 ? (
-          <p>No Orders Found</p>
-        ) : (
-          <table className="w-full border">
+        <div className="space-y-4">
 
-            <thead>
-              <tr className="bg-red-600 text-white">
-                <th className="p-3">Customer</th>
-                <th className="p-3">Amount</th>
-              </tr>
-            </thead>
+          <div className="bg-green-100 p-4 rounded-lg">
+            ✔ Orders Processing Active
+          </div>
 
-            <tbody>
-              {sales.slice(-5).map((order, index) => (
-                <tr
-                  key={index}
-                  className="text-center border-b"
-                >
-                  <td className="p-3">
-                    {order.customer}
-                  </td>
+          <div className="bg-blue-100 p-4 rounded-lg">
+            ✔ Revenue Tracking Enabled
+          </div>
 
-                  <td className="p-3">
-                    ₹{order.amount}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+          <div className="bg-yellow-100 p-4 rounded-lg">
+            ✔ Customer Orders Updated
+          </div>
 
-          </table>
-        )}
+        </div>
 
       </div>
 

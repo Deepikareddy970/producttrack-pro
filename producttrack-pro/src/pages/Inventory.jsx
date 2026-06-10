@@ -1,275 +1,313 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-function Sales() {
-  const [orders, setOrders] = useState([]);
+function Inventory() {
+  const navigate = useNavigate();
 
-  const [customer, setCustomer] = useState("");
-  const [shopName, setShopName] = useState("");
-  const [location, setLocation] = useState("");
-  const [product, setProduct] = useState("");
+  const userRole = localStorage.getItem("role");
+
+  const [items, setItems] = useState([]);
+
+  const [productName, setProductName] = useState("");
+  const [category, setCategory] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [amount, setAmount] = useState("");
-  const [status, setStatus] = useState("Pending");
+  const [supplier, setSupplier] = useState("");
 
   useEffect(() => {
-    const savedOrders =
-      JSON.parse(localStorage.getItem("sales")) || [];
-
-    setOrders(savedOrders);
+    fetchInventory();
   }, []);
 
-  const addOrder = () => {
+  const fetchInventory = async () => {
+    try {
+      const res = await axios.get(
+        "https://producttrack-backend-5wd3.onrender.com/api/inventory"
+      );
+
+      setItems(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const addItem = async () => {
     if (
-      !customer ||
-      !shopName ||
-      !location ||
-      !product ||
+      !productName ||
+      !category ||
       !quantity ||
-      !amount
+      !supplier
     ) {
       alert("Please fill all fields");
       return;
     }
 
-    const newOrder = {
-      id: "ORD" + Date.now(),
-      customer,
-      shopName,
-      location,
-      product,
-      quantity,
-      amount: Number(amount),
-      status,
-      date: new Date().toLocaleDateString(),
-    };
+    try {
+      await axios.post(
+        "https://producttrack-backend-5wd3.onrender.com/api/inventory",
+        {
+          productName,
+          category,
+          quantity,
+          supplier,
+        }
+      );
 
-    const updatedOrders = [
-      ...orders,
-      newOrder,
-    ];
+      setProductName("");
+      setCategory("");
+      setQuantity("");
+      setSupplier("");
 
-    setOrders(updatedOrders);
+      fetchInventory();
 
-    localStorage.setItem(
-      "sales",
-      JSON.stringify(updatedOrders)
-    );
-
-    setCustomer("");
-    setShopName("");
-    setLocation("");
-    setProduct("");
-    setQuantity("");
-    setAmount("");
-    setStatus("Pending");
+      alert("Inventory Item Added Successfully");
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const deleteOrder = (id) => {
-    const updatedOrders = orders.filter(
-      (order) => order.id !== id
+  const deleteItem = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this item?"
     );
 
-    setOrders(updatedOrders);
+    if (!confirmDelete) return;
 
-    localStorage.setItem(
-      "sales",
-      JSON.stringify(updatedOrders)
-    );
+    try {
+      await axios.delete(
+        `https://producttrack-backend-5wd3.onrender.com/api/inventory/${id}`
+      );
+
+      fetchInventory();
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const totalRevenue = orders.reduce(
-    (sum, order) => sum + Number(order.amount),
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("name");
+
+    navigate("/login");
+  };
+
+  const totalStock = items.reduce(
+    (sum, item) =>
+      sum + Number(item.quantity || 0),
     0
   );
 
   return (
     <div className="p-10 bg-slate-100 min-h-screen">
 
-      <h1 className="text-4xl font-bold mb-8">
-        Sales Management
-      </h1>
+      {/* Header */}
+      <div className="flex justify-between items-center mb-8">
 
-      {/* Form */}
-      <div className="bg-white p-6 rounded-xl shadow-lg mb-8">
+        <div>
+          <h1 className="text-4xl font-bold text-slate-800">
+            Inventory Management
+          </h1>
 
-        <h2 className="text-2xl font-bold mb-5">
-          Create Order
-        </h2>
+          <p className="text-gray-600 mt-2">
+            Manage Products, Stock & Suppliers
+          </p>
+        </div>
 
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="flex gap-3">
 
-          <input
-            type="text"
-            placeholder="Customer Name"
-            value={customer}
-            onChange={(e) =>
-              setCustomer(e.target.value)
-            }
-            className="border p-3 rounded"
-          />
-
-          <input
-            type="text"
-            placeholder="Shop Name"
-            value={shopName}
-            onChange={(e) =>
-              setShopName(e.target.value)
-            }
-            className="border p-3 rounded"
-          />
-
-          <input
-            type="text"
-            placeholder="Shop Location"
-            value={location}
-            onChange={(e) =>
-              setLocation(e.target.value)
-            }
-            className="border p-3 rounded"
-          />
-
-          <input
-            type="text"
-            placeholder="Product"
-            value={product}
-            onChange={(e) =>
-              setProduct(e.target.value)
-            }
-            className="border p-3 rounded"
-          />
-
-          <input
-            type="number"
-            placeholder="Quantity"
-            value={quantity}
-            onChange={(e) =>
-              setQuantity(e.target.value)
-            }
-            className="border p-3 rounded"
-          />
-
-          <input
-            type="number"
-            placeholder="Amount"
-            value={amount}
-            onChange={(e) =>
-              setAmount(e.target.value)
-            }
-            className="border p-3 rounded"
-          />
-
-          <select
-            value={status}
-            onChange={(e) =>
-              setStatus(e.target.value)
-            }
-            className="border p-3 rounded"
+          <button
+            onClick={() => navigate(-1)}
+            className="bg-gray-600 hover:bg-gray-700 text-white px-5 py-2 rounded-lg"
           >
-            <option>Pending</option>
-            <option>Processing</option>
-            <option>Delivered</option>
-          </select>
+            Back
+          </button>
+
+          <button
+            onClick={logout}
+            className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg"
+          >
+            Logout
+          </button>
 
         </div>
 
-        <button
-          onClick={addOrder}
-          className="mt-5 bg-red-600 text-white px-6 py-3 rounded-lg"
-        >
-          Add Order
-        </button>
+      </div>
+
+      {/* Add Inventory - Hidden for Manager */}
+      {userRole !== "manager" && (
+        <div className="bg-white p-6 rounded-xl shadow-lg mb-8">
+
+          <h2 className="text-2xl font-bold mb-5">
+            Add Inventory Item
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-4">
+
+            <input
+              type="text"
+              placeholder="Product Name"
+              value={productName}
+              onChange={(e) =>
+                setProductName(e.target.value)
+              }
+              className="border p-3 rounded-lg"
+            />
+
+            <input
+              type="text"
+              placeholder="Category"
+              value={category}
+              onChange={(e) =>
+                setCategory(e.target.value)
+              }
+              className="border p-3 rounded-lg"
+            />
+
+            <input
+              type="number"
+              placeholder="Quantity"
+              value={quantity}
+              onChange={(e) =>
+                setQuantity(e.target.value)
+              }
+              className="border p-3 rounded-lg"
+            />
+
+            <input
+              type="text"
+              placeholder="Supplier"
+              value={supplier}
+              onChange={(e) =>
+                setSupplier(e.target.value)
+              }
+              className="border p-3 rounded-lg"
+            />
+
+          </div>
+
+          <button
+            onClick={addItem}
+            className="mt-5 bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg shadow-lg"
+          >
+            Add Item
+          </button>
+
+        </div>
+      )}
+
+      {/* Summary Cards */}
+      <div className="grid md:grid-cols-2 gap-6 mb-8">
+
+        <div className="bg-yellow-500 text-white p-6 rounded-xl shadow-lg">
+
+          <h2 className="text-xl font-semibold">
+            Total Products
+          </h2>
+
+          <p className="text-4xl font-bold mt-3">
+            {items.length}
+          </p>
+
+        </div>
+
+        <div className="bg-green-600 text-white p-6 rounded-xl shadow-lg">
+
+          <h2 className="text-xl font-semibold">
+            Total Stock
+          </h2>
+
+          <p className="text-4xl font-bold mt-3">
+            {totalStock}
+          </p>
+
+        </div>
 
       </div>
 
-      {/* Revenue */}
-      <div className="bg-green-600 text-white p-6 rounded-xl shadow-lg mb-8">
-
-        <h2 className="text-2xl font-bold">
-          Total Revenue
-        </h2>
-
-        <p className="text-4xl font-bold mt-2">
-          ₹{totalRevenue}
-        </p>
-
-      </div>
-
-      {/* Orders Table */}
+      {/* Inventory Table */}
       <div className="bg-white p-6 rounded-xl shadow-lg">
 
         <h2 className="text-2xl font-bold mb-5">
-          Orders List
+          Inventory Items
         </h2>
 
-        <div className="overflow-x-auto">
+        <table className="w-full border">
 
-          <table className="w-full border">
+          <thead>
 
-            <thead>
-              <tr className="bg-red-600 text-white">
+            <tr className="bg-yellow-500 text-white">
 
-                <th className="p-3">Order ID</th>
-                <th className="p-3">Customer</th>
-                <th className="p-3">Shop</th>
-                <th className="p-3">Location</th>
-                <th className="p-3">Product</th>
-                <th className="p-3">Qty</th>
-                <th className="p-3">Amount</th>
-                <th className="p-3">Status</th>
-                <th className="p-3">Date</th>
+              <th className="p-3">Product</th>
+              <th className="p-3">Category</th>
+              <th className="p-3">Quantity</th>
+              <th className="p-3">Supplier</th>
+
+              {userRole !== "manager" && (
                 <th className="p-3">Action</th>
+              )}
 
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            {items.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={
+                    userRole === "manager" ? 4 : 5
+                  }
+                  className="text-center p-5"
+                >
+                  No Inventory Items Found
+                </td>
               </tr>
-            </thead>
+            ) : (
+              items.map((item) => (
+                <tr
+                  key={item._id}
+                  className="text-center border-b hover:bg-slate-100"
+                >
 
-            <tbody>
-
-              {orders.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan="10"
-                    className="text-center p-5"
-                  >
-                    No Orders Found
+                  <td className="p-3">
+                    {item.productName}
                   </td>
-                </tr>
-              ) : (
-                orders.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="border-b text-center"
-                  >
 
-                    <td>{order.id}</td>
-                    <td>{order.customer}</td>
-                    <td>{order.shopName}</td>
-                    <td>{order.location}</td>
-                    <td>{order.product}</td>
-                    <td>{order.quantity}</td>
-                    <td>₹{order.amount}</td>
-                    <td>{order.status}</td>
-                    <td>{order.date}</td>
+                  <td className="p-3">
+                    {item.category}
+                  </td>
 
-                    <td>
+                  <td className="p-3">
+                    {item.quantity}
+                  </td>
+
+                  <td className="p-3">
+                    {item.supplier}
+                  </td>
+
+                  {userRole !== "manager" && (
+                    <td className="p-3">
+
                       <button
                         onClick={() =>
-                          deleteOrder(order.id)
+                          deleteItem(item._id)
                         }
-                        className="bg-red-500 text-white px-3 py-1 rounded"
+                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
                       >
                         Delete
                       </button>
+
                     </td>
+                  )}
 
-                  </tr>
-                ))
-              )}
+                </tr>
+              ))
+            )}
 
-            </tbody>
+          </tbody>
 
-          </table>
-
-        </div>
+        </table>
 
       </div>
 
@@ -277,4 +315,4 @@ function Sales() {
   );
 }
 
-export default Sales;
+export default Inventory;

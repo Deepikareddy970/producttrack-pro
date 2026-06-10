@@ -1,3 +1,6 @@
+import { useState, useEffect } from "react";
+import axios from "axios";
+
 import {
   BarChart,
   Bar,
@@ -13,46 +16,51 @@ import {
 import jsPDF from "jspdf";
 
 function Reports() {
-  const employees =
-    JSON.parse(localStorage.getItem("employees")) || [];
+  const [report, setReport] = useState({
+    employees: 0,
+    attendance: 0,
+    inventory: 0,
+    production: 0,
+    sales: 0,
+    revenue: 0,
+  });
 
-  const attendance =
-    JSON.parse(localStorage.getItem("attendance")) || [];
+  useEffect(() => {
+    fetchReport();
+  }, []);
 
-  const inventory =
-    JSON.parse(localStorage.getItem("inventory")) || [];
+  const fetchReport = async () => {
+    try {
+      const res = await axios.get(
+        "https://producttrack-backend-5wd3.onrender.com/api/reports/dashboard"
+      );
 
-  const production =
-    JSON.parse(localStorage.getItem("production")) || [];
-
-  const sales =
-    JSON.parse(localStorage.getItem("sales")) || [];
-
-  const revenue = sales.reduce(
-    (sum, order) => sum + Number(order.amount || 0),
-    0
-  );
+      setReport(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const chartData = [
     {
       name: "Employees",
-      value: employees.length,
+      value: report.employees,
     },
     {
       name: "Attendance",
-      value: attendance.length,
+      value: report.attendance,
     },
     {
       name: "Inventory",
-      value: inventory.length,
+      value: report.inventory,
     },
     {
       name: "Production",
-      value: production.length,
+      value: report.production,
     },
     {
       name: "Sales",
-      value: sales.length,
+      value: report.sales,
     },
   ];
 
@@ -83,37 +91,37 @@ function Reports() {
     );
 
     doc.text(
-      `Total Employees: ${employees.length}`,
+      `Total Employees: ${report.employees}`,
       20,
       60
     );
 
     doc.text(
-      `Attendance Records: ${attendance.length}`,
+      `Attendance Records: ${report.attendance}`,
       20,
       80
     );
 
     doc.text(
-      `Inventory Items: ${inventory.length}`,
+      `Inventory Items: ${report.inventory}`,
       20,
       100
     );
 
     doc.text(
-      `Production Records: ${production.length}`,
+      `Production Records: ${report.production}`,
       20,
       120
     );
 
     doc.text(
-      `Sales Orders: ${sales.length}`,
+      `Sales Orders: ${report.sales}`,
       20,
       140
     );
 
     doc.text(
-      `Total Revenue: ₹${revenue}`,
+      `Total Revenue: ₹${report.revenue}`,
       20,
       160
     );
@@ -128,17 +136,21 @@ function Reports() {
   };
 
   return (
-    <div className="p-10 bg-slate-100 min-h-screen">
+    <div className="p-10 bg-gradient-to-br from-slate-100 to-slate-200 min-h-screen">
+    
 
-      <h1 className="text-4xl font-bold mb-4">
+      <h1 className="text-5xl font-extrabold text-slate-800 mb-2">
         Reports & Analytics
       </h1>
 
-      <p className="text-gray-600 mb-8">
-        Report Date :
-        {" "}
-        {new Date().toLocaleDateString()}
-      </p>
+      <div className="bg-white p-4 rounded-xl shadow-md mb-8">
+        <p className="text-lg font-semibold text-gray-700">
+          📅 Report Date :
+          <span className="text-blue-700 ml-2">
+            {new Date().toLocaleDateString()}
+          </span>
+        </p>
+      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
@@ -146,41 +158,41 @@ function Reports() {
         <div className="bg-blue-600 text-white p-5 rounded-xl shadow-lg">
           <h3>Employees</h3>
           <p className="text-3xl font-bold">
-            {employees.length}
+            {report.employees}
           </p>
         </div>
 
         <div className="bg-green-600 text-white p-5 rounded-xl shadow-lg">
           <h3>Attendance</h3>
           <p className="text-3xl font-bold">
-            {attendance.length}
+            {report.attendance}
           </p>
         </div>
 
         <div className="bg-yellow-500 text-white p-5 rounded-xl shadow-lg">
           <h3>Inventory</h3>
           <p className="text-3xl font-bold">
-            {inventory.length}
+            {report.inventory}
           </p>
         </div>
 
         <div className="bg-purple-600 text-white p-5 rounded-xl shadow-lg">
           <h3>Production</h3>
           <p className="text-3xl font-bold">
-            {production.length}
+            {report.production}
           </p>
         </div>
 
         <div className="bg-red-600 text-white p-5 rounded-xl shadow-lg">
           <h3>Revenue</h3>
           <p className="text-3xl font-bold">
-            ₹{revenue}
+            ₹{report.revenue}
           </p>
         </div>
 
       </div>
 
-      {/* Company Summary */}
+      {/* Summary */}
       <div className="bg-white p-8 rounded-xl shadow-lg mb-8">
 
         <h2 className="text-2xl font-bold mb-6">
@@ -191,32 +203,32 @@ function Reports() {
 
           <div className="flex justify-between border-b pb-2">
             <span>👥 Total Employees</span>
-            <strong>{employees.length}</strong>
+            <strong>{report.employees}</strong>
           </div>
 
           <div className="flex justify-between border-b pb-2">
             <span>📅 Attendance Records</span>
-            <strong>{attendance.length}</strong>
+            <strong>{report.attendance}</strong>
           </div>
 
           <div className="flex justify-between border-b pb-2">
             <span>📦 Inventory Items</span>
-            <strong>{inventory.length}</strong>
+            <strong>{report.inventory}</strong>
           </div>
 
           <div className="flex justify-between border-b pb-2">
             <span>🏭 Production Records</span>
-            <strong>{production.length}</strong>
+            <strong>{report.production}</strong>
           </div>
 
           <div className="flex justify-between border-b pb-2">
             <span>🛒 Sales Orders</span>
-            <strong>{sales.length}</strong>
+            <strong>{report.sales}</strong>
           </div>
 
           <div className="flex justify-between border-b pb-2">
             <span>💰 Total Revenue</span>
-            <strong>₹{revenue}</strong>
+            <strong>₹{report.revenue}</strong>
           </div>
 
         </div>
@@ -228,8 +240,8 @@ function Reports() {
 
         <div className="bg-white p-6 rounded-xl shadow-lg">
 
-          <h2 className="text-2xl font-bold mb-5">
-            Company Statistics
+          <h2 className="text-2xl font-extrabold text-blue-700 mb-5">
+            📈 Company Statistics
           </h2>
 
           <ResponsiveContainer
@@ -253,8 +265,8 @@ function Reports() {
 
         <div className="bg-white p-6 rounded-xl shadow-lg">
 
-          <h2 className="text-2xl font-bold mb-5">
-            Data Distribution
+          <h2 className="text-2xl font-extrabold text-purple-700 mb-5">
+            🥧 Data Distribution
           </h2>
 
           <ResponsiveContainer
@@ -330,7 +342,7 @@ function Reports() {
 
         <button
           onClick={generateReport}
-          className="mt-8 bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-lg"
+          className="mt-8 bg-gradient-to-r from-blue-700 to-indigo-800 hover:scale-105 transition-all duration-300 text-white px-8 py-4 rounded-xl font-bold shadow-lg"
         >
           Download PDF Report
         </button>

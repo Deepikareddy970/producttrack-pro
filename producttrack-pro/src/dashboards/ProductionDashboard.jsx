@@ -1,20 +1,63 @@
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function ProductionDashboard() {
-  const production =
-    JSON.parse(localStorage.getItem("production")) || [];
+  const navigate = useNavigate();
 
-  const totalProduced = production.reduce(
-    (sum, item) => sum + Number(item.quantity || 0),
-    0
-  );
+  const [report, setReport] = useState({
+    production: 0,
+  });
+
+  const user =
+    JSON.parse(localStorage.getItem("currentUser")) || {};
+
+  useEffect(() => {
+    fetchDashboard();
+  }, []);
+
+  const fetchDashboard = async () => {
+    try {
+      const res = await axios.get(
+        "https://producttrack-backend-5wd3.onrender.com/api/reports/dashboard"
+      );
+
+      setReport({
+        production: res.data.production,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem("currentUser");
+    navigate("/login");
+  };
 
   return (
     <div className="p-10 bg-slate-100 min-h-screen">
 
-      <h1 className="text-4xl font-bold text-slate-800 mb-8">
-        Production Dashboard
-      </h1>
+      <div className="flex justify-between items-center mb-8">
+
+        <div>
+          <h1 className="text-4xl font-bold text-slate-800">
+            Production Dashboard
+          </h1>
+
+          <p className="text-gray-600 mt-2">
+            Welcome, {user.username || "Production User"}
+          </p>
+        </div>
+
+        <button
+          onClick={logout}
+          className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg"
+        >
+          Logout
+        </button>
+
+      </div>
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -26,7 +69,7 @@ function ProductionDashboard() {
           </h2>
 
           <p className="text-4xl font-bold mt-3">
-            {production.length}
+            {report.production}
           </p>
 
         </div>
@@ -34,11 +77,11 @@ function ProductionDashboard() {
         <div className="bg-green-600 text-white p-6 rounded-xl shadow-lg">
 
           <h2 className="text-xl font-semibold">
-            Total Production
+            Production Status
           </h2>
 
-          <p className="text-4xl font-bold mt-3">
-            {totalProduced}
+          <p className="text-2xl font-bold mt-3">
+            Active
           </p>
 
         </div>
@@ -73,18 +116,15 @@ function ProductionDashboard() {
           <p>
             🏭 Total Production Records :
             {" "}
-            {production.length}
+            {report.production}
           </p>
 
           <p>
-            📦 Units Produced :
-            {" "}
-            {totalProduced}
+            📦 Manufacturing Process Tracking Enabled
           </p>
 
           <p>
-            ✅ Production Team manages
-            manufacturing and output tracking.
+            ✅ Production Team manages manufacturing and output tracking.
           </p>
 
         </div>
